@@ -1,0 +1,13 @@
+
+{
+  "name": "NOTEZ-server",
+  "version": "1.0.0",
+  "description": "WebRTC signaling server",
+  "main": "server.js",
+  "dependencies": {
+    "ws": "^8.5.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
