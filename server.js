@@ -8,8 +8,9 @@ let waitingClient = null;
 console.log("Starting server");
 
 wss.on("connection", (ws) => {
+  console.log("Connection initiated");
   if (waitingClient) {
-    // Pair them
+    console.log("Pairing clients.");
     const peerA = waitingClient;
     const peerB = ws;
     peerA.peer = peerB;
@@ -20,6 +21,7 @@ wss.on("connection", (ws) => {
 
     waitingClient = null;
   } else {
+    console.log("No waiting clients.");
     waitingClient = ws;
   }
 
