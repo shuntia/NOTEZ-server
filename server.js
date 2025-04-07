@@ -23,7 +23,6 @@ wss.on("connection", (ws) => {
   }
 
   ws.on("message", (msg) => {
-    console.log(msg);
     try {
       let data = JSON.parse(msg);
       if (data.type == "probe") {
@@ -37,6 +36,7 @@ wss.on("connection", (ws) => {
             peerA.send(JSON.stringify({ type: 'match', initiator: true }));
             peerB.send(JSON.stringify({ type: 'match', initiator: false }));
             delete waitingClients[code];
+            console.log(waitingClients);
           }
         } else {
           waitingClients[contents.code] = { pass: contents.pass, ws: ws }
