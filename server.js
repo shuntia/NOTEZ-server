@@ -5,6 +5,8 @@ const wss = new WebSocket.Server({ port: 3000 });
 
 let waitingClient = null;
 
+console.log("Starting server");
+
 wss.on("connection", (ws) => {
   if (waitingClient) {
     // Pair them
