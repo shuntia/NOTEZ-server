@@ -28,7 +28,7 @@ wss.on("connection", (ws) => {
   ws.on("message", (msg) => {
     console.log(msg);
     if (ws.peer && ws.peer.readyState === WebSocket.OPEN) {
-      ws.peer.send(msg.toJSON()); // Forward signaling data
+      ws.peer.send(msg); // Forward signaling data
     }
   });
 
