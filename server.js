@@ -16,8 +16,8 @@ wss.on("connection", (ws) => {
     peerA.peer = peerB;
     peerB.peer = peerA;
 
-    peerA.send(JSON.stringify({ type: "match", initiator: true }));
-    peerB.send(JSON.stringify({ type: "match", initiator: false }));
+    peerA.send(JSON.stringify({ type: 'match', initiator: true }));
+    peerB.send(JSON.stringify({ type: 'match', initiator: false }));
 
     waitingClient = null;
   } else {
@@ -26,6 +26,7 @@ wss.on("connection", (ws) => {
   }
 
   ws.on("message", (msg) => {
+    console.log(msg);
     if (ws.peer && ws.peer.readyState === WebSocket.OPEN) {
       ws.peer.send(msg.toJSON()); // Forward signaling data
     }
