@@ -36,7 +36,7 @@ wss.on("connection", (ws) => {
             peerB.peer = peerA;
             peerA.send(JSON.stringify({ type: 'match', initiator: true }));
             peerB.send(JSON.stringify({ type: 'match', initiator: false }));
-            delete contents.code;
+            delete waitingClients[code];
           }
         } else {
           waitingClients[contents.code] = { pass: contents.pass, ws: ws }
