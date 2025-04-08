@@ -1,61 +1,56 @@
-
-// server.js
+// ...existing code replaced...
 const WebSocket = require("ws");
-const wss = new WebSocket.Server({ port: process.env.PORT || 4000 });
+const port = process.env.PORT || 4000;
+const wss = new WebSocket.Server({ port });
+let waitingClients = {};
 
-let waitingClients = {}; // Object to hold waiting clients keyed by match code
-
-console.log("Starting server");
+console.log("Server running on port:", port);
 
 wss.on("connection", (ws) => {
-  console.log("Connection initiated");
+  console.log("New connection");
 
   ws.on("message", (msg) => {
+    let data;
     try {
-      let data = JSON.parse(msg);
-
-      // Handle probe messages for creating or joining a match
-      if (data.type === "probe") {
-        let contents = data.data;
-        // Check if the match code exists in waitingClients
-        if (waitingClients.hasOwnProperty(contents.code)) {
-          // If the password matches the one stored from the first client...
-          if (contents.pass === waitingClients[contents.code].pass) {
-            // Pair the first client (peerA) with the current client (peerB)
-            const peerA = waitingClients[contents.code].ws;
-            const peerB = ws;
-            peerA.peer = peerB;
-            peerB.peer = peerA;
-            // Inform the clients who is initiator and who is not
-            peerA.send(JSON.stringify({ type: 'match', initiator: true }));
-            peerB.send(JSON.stringify({ type: 'match', initiator: false }));
-            // Remove the entry as the match is now complete
-            delete waitingClients[contents.code];
-            console.log("Match created for code", contents.code);
-          } else {
-            // Password did not match, send an authentication failure if desired.
-            ws.send(JSON.stringify({ type: 'auth_failed', message: 'Password incorrect.' }));
-          }
-        } else {
-          // No match exists, so create a new "room" with the given code and pass.
-          waitingClients[contents.code] = { pass: contents.pass, ws: ws };
-          ws.send(JSON.stringify({ type: 'newroom', message: 'New room created.' }));
-          console.log("Created new room for code", contents.code);
-        }
-      }
-    } catch (e) {
-      console.error("Error handling message:", e);
+      data = JSON.parse(msg);
+    } catch (err) {
+      console.error("Failed to parse message:", err);
+      return;
     }
 
-    // If this ws is paired with a peer and the peer is open, forward the message.
+    // "probe" to create or join a match
+    if (data.type === "probe") {
+      const { code, pass } = data.data;
+      if (waitingClients.hasOwnProperty(code)) {
+        // Try matching
+        if (pass === waitingClients[code].pass) {
+          const peerA = waitingClients[code].ws;
+          const peerB = ws;
+          peerA.peer = peerB;
+          peerB.peer = peerA;
+          peerA.send(JSON.stringify({ type: "match", initiator: true }));
+          peerB.send(JSON.stringify({ type: "match", initiator: false }));
+          delete waitingClients[code];
+          console.log("Matched code:", code);
+        } else {
+          ws.send(JSON.stringify({ type: "auth_failed" }));
+        }
+      } else {
+        // Create a new waiting slot
+        waitingClients[code] = { pass, ws };
+        ws.send(JSON.stringify({ type: "newroom" }));
+        console.log("Created new room for code:", code);
+      }
+    }
+
+    // Forward any messages to paired peer
     if (ws.peer && ws.peer.readyState === WebSocket.OPEN) {
       ws.peer.send(msg);
     }
   });
 
   ws.on("close", () => {
-    // Cleanup on close: remove the waiting client if it's still stored,
-    // and close the peer's connection if it exists.
+    // Cleanup
     for (const code in waitingClients) {
       if (waitingClients[code].ws === ws) {
         delete waitingClients[code];
